@@ -1,0 +1,602 @@
+{
+  "name": "Get Price Bitcoin Price Alerts",
+  "nodes": [
+    {
+      "parameters": {
+        "operation": "price",
+        "baseCurrencies": "={{ [\"bitcoin\"] }}",
+        "quoteCurrencies": [
+          "usd"
+        ],
+        "options": {}
+      },
+      "type": "n8n-nodes-base.coinGecko",
+      "typeVersion": 1,
+      "position": [
+        416,
+        160
+      ],
+      "id": "c7a359b5-7769-4571-a264-eb7397bd055b",
+      "name": "Get the price for a coin"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE",
+          "mode": "list",
+          "cachedResultName": "Coin Gecko Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE/edit#gid=0"
+        },
+        "combineFilters": "OR",
+        "options": {
+          "dataLocationOnSheet": {
+            "values": {
+              "rangeDefinition": "specifyRangeA1",
+              "range": "F1:F2"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        1088,
+        160
+      ],
+      "id": "a1bfa448-b676-4801-96ef-0372a01d6d08",
+      "name": "Get Reference Value ",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wQZs2bVsBqFodrYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3bc2987b-f417-4dfa-ac0b-3bb461e40527",
+              "name": "reference price",
+              "value": "=",
+              "type": "number"
+            },
+            {
+              "id": "48d97b71-08b8-4b60-9e69-57950613a587",
+              "name": "minimum price",
+              "value": "={{ $json['reference price'] - ($json['reference price']*0.05) }}",
+              "type": "number"
+            },
+            {
+              "id": "b45e573d-72c5-4660-abe0-8b8f9f008eb9",
+              "name": "maximum price",
+              "value": "={{ $json['reference price'] + ($json['reference price']*0.05) }}",
+              "type": "number"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        1312,
+        160
+      ],
+      "id": "9fd30e69-9670-437e-958d-abc97b052b1f",
+      "name": "Reference Value"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "2d01c296-4230-4e76-94b8-dd12c2e00aaa",
+              "leftValue": "={{ $('Get the price for a coin').item.json.bitcoin.usd }}",
+              "rightValue": "={{ $json['maximum price'] }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            },
+            {
+              "id": "6f7c47f1-9a97-4b46-b778-ec35e6cabdba",
+              "leftValue": "={{ $('Get the price for a coin').item.json.bitcoin.usd }}",
+              "rightValue": "={{ $json['minimum price'] }}",
+              "operator": {
+                "type": "number",
+                "operation": "lte"
+              }
+            }
+          ],
+          "combinator": "or"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1520,
+        0
+      ],
+      "id": "7c970efb-885f-47d1-a926-6eb08f1ee346",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE",
+          "mode": "list",
+          "cachedResultName": "Coin Gecko Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "timestamp": "={{ $now.format('FF') }}",
+            "bitcoin": "={{ $json.bitcoin.usd }}",
+            "id": "={{ $execution.id }}",
+            "percentage change": "={{((($json.bitcoin.usd - $('Select Previous Value').item.json.bitcoin) / $('Select Previous Value').item.json.bitcoin))  }}"
+          },
+          "matchingColumns": [
+            "id"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "bitcoin",
+              "displayName": "bitcoin",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "timestamp",
+              "displayName": "timestamp",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "percentage change",
+              "displayName": "percentage change",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "reference price",
+              "displayName": "reference price",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        656,
+        160
+      ],
+      "id": "c6c2b6bc-2c52-4618-999f-5071d5bd04d9",
+      "name": "Appending Coin",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wQZs2bVsBqFodrYw",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "29ab20cc-4309-4a65-9b67-f6523f4c1715",
+              "leftValue": "={{ $('Get the price for a coin').item.json.bitcoin.usd }}",
+              "rightValue": "={{ $('Reference Value').item.json['maximum price'] }}",
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        1728,
+        -96
+      ],
+      "id": "f921834d-34ab-44f7-b670-79de92c8bde3",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "documentId": {
+          "__rl": true,
+          "value": "15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE",
+          "mode": "list",
+          "cachedResultName": "Coin Gecko Tracker",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/15wbmEuXO_uB9EOd_3XNUEDvBcSM2OBg5vipqXMbD6LE/edit#gid=0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        432,
+        -240
+      ],
+      "id": "1af0ed0a-dda4-4d32-b3fa-31c4064f9850",
+      "name": "Get row(s) in sheet",
+      "notesInFlow": true,
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "wQZs2bVsBqFodrYw",
+          "name": "Google Sheets account"
+        }
+      },
+      "notes": "Read all data from the Google Sheet"
+    },
+    {
+      "parameters": {
+        "keep": "lastItems"
+      },
+      "type": "n8n-nodes-base.limit",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -240
+      ],
+      "id": "4f1153f8-4f01-49c6-838f-ae79c22013a7",
+      "name": "Limit",
+      "notesInFlow": true,
+      "notes": "Takes only the last elements of the list, so we can isolate the last bitcoin record before retrieving the new one from Coin Gecko"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "bfe4ba12-bce3-4426-b8fc-d943aa79d214",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        -240
+      ],
+      "id": "d01289eb-183c-4ecb-bdbe-615e83a11190",
+      "name": "Select Previous Value"
+    },
+    {
+      "parameters": {
+        "sendTo": "alexey.1408.pogrebtsov@gmail.com",
+        "subject": "Price Drop Alert",
+        "message": "=The price of BTC has dropped! 📉 \n{{ \"\\n\" }} \nOld Price: ${{ $('Select Previous Value').item.json.bitcoin }}\n{{ \"\\n\" }} \nNew Price: ${{ $('Get the price for a coin').item.json.bitcoin.usd }}\n{{ \"\\n\" }} \nPercentage Decrease: {{ ($('Appending Coin').item.json[\"percentage change\"]*100).round(5) }}%\n{{ \"\\n\" }} \nTimestamp: {{ $('Get row(s) in sheet').item.json.timestamp }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1936,
+        0
+      ],
+      "id": "3467c97f-fa1f-4cdf-ae2b-403cbd02f57b",
+      "name": "Price Drop",
+      "webhookId": "75c734c8-b878-4dbc-a4de-74473c622402",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JCspFclmzjKMw5wk",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "sendTo": "alexey.1408.pogrebtsov@gmail.com",
+        "subject": "=Price Increase Alert",
+        "message": "=The price of BTC has increased! ⏫🔥 \nOld Price: ${{ $('Select Previous Value').item.json.bitcoin }}{{ \"\\n\" }}\nNew Price: ${{ $('Get the price for a coin').item.json.bitcoin.usd }}{{ \"\\n\" }}\nPercentage Increase: {{ ($('Appending Coin').item.json[\"percentage change\"] * 100).round(5)}}%{{ \"\\n\" }}\nTimestamp: {{ $('Get row(s) in sheet').item.json.timestamp }}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        1936,
+        -240
+      ],
+      "id": "defff32b-fd69-4da0-b0f3-850ef6282ba7",
+      "name": "Price Increase",
+      "webhookId": "85ef2d57-8429-40e1-b9a1-b6d6aeb1d0ca",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "JCspFclmzjKMw5wk",
+          "name": "Gmail account 2"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## Isolate last Bitcoin recorded value\n\nRead data from the Google Sheets, isolates last row and saves the value",
+        "height": 288,
+        "width": 656
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        352,
+        -368
+      ],
+      "id": "813b2cc5-8b2e-44e2-8a32-7d1856e46497",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "\n\n## Get Bitcoin value \nAppends the Bitcoin value, timestamp and id\n",
+        "height": 288,
+        "width": 432,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        368,
+        32
+      ],
+      "id": "5268512f-da30-457a-b711-5d2c573c15c5",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "## Reads the Reference Value in the Google Sheets\n\nReads a specific cell in the Google Sheets and store this value as a reference value to compare later",
+        "height": 336,
+        "width": 416
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1040,
+        0
+      ],
+      "id": "d555cb06-5cd9-4a16-81e1-f16225afa8b2",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "## Compares values\n\nIf the variation from the Reference value is more than 5% from the Previous Value then it triggers a Price Drop or Increase Gmail message",
+        "height": 176,
+        "width": 288,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1632,
+        160
+      ],
+      "id": "00693b50-a2bb-48da-83e6-70fbc962cc1c",
+      "name": "Sticky Note3"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {}
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        96,
+        -240
+      ],
+      "id": "ebbe19a6-8cf4-4bcf-919b-393578be00fd",
+      "name": "Schedule Trigger"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Get the price for a coin": {
+      "main": [
+        [
+          {
+            "node": "Appending Coin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get Reference Value ": {
+      "main": [
+        [
+          {
+            "node": "Reference Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Reference Value": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Appending Coin": {
+      "main": [
+        [
+          {
+            "node": "Get Reference Value ",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Price Increase",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Price Drop",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Get row(s) in sheet": {
+      "main": [
+        [
+          {
+            "node": "Limit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Limit": {
+      "main": [
+        [
+          {
+            "node": "Select Previous Value",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Select Previous Value": {
+      "main": [
+        [
+          {
+            "node": "Get the price for a coin",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule Trigger": {
+      "main": [
+        [
+          {
+            "node": "Get row(s) in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "a78cf0f8-e5f2-4aab-b0fe-148bfc692a6d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d59ef5f33aa90cf64b1f7b19c7d6dc8e768256f86a965946fe86c211bd91385e"
+  },
+  "id": "kppt5D59goaENSbi",
+  "tags": []
+}
